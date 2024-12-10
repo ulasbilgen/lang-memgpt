@@ -11,15 +11,16 @@ PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format='value(projectNum
 
 echo "PROJECT_NUMBER: $PROJECT_NUMBER"
 
-# Read environment variables from .env file
-ENV_VARS=$(grep -v '^#' .env | sed 's/^/--set-env-vars /' | tr '\n' ' ')
+# Read environment variables from .env file and filter out empty lines
+ENV_VARS=$(grep -v '^#' .env | grep '=' | sed 's/^/--set-env-vars /' | tr '\n' ' ' | sed 's/ $//')
 
 # Print the command that will be executed (without actual env var values)
 echo "Executing command:"
 SERVICE_NAME=${1:-discord-bot}
-echo "gcloud builds submit --config=cloudbuild.yaml --substitutions=_SERVICE_ACCOUNT=${PROJECT_NUMBER}-compute@developer.gserviceaccount.com,_SERVICE_NAME=$SERVICE_NAME,_ENV_VARS=\"${ENV_VARS}\""
+echo "gcloud builds submit --verbosity=debug --config=cloudbuild.yaml --substitutions=_SERVICE_ACCOUNT=${PROJECT_NUMBER}-compute@developer.gserviceaccount.com,_SERVICE_NAME=$SERVICE_NAME,_ENV_VARS=\"${ENV_VARS}\""
+
 # Submit the build
-gcloud builds submit --config=cloudbuild.yaml \
+gcloud builds submit --verbosity=debug --config=cloudbuild.yaml \
     --substitutions=_SERVICE_ACCOUNT=${PROJECT_NUMBER}-compute@developer.gserviceaccount.com,_SERVICE_NAME=$SERVICE_NAME,_ENV_VARS="${ENV_VARS}"
 
 # If the build was successful, describe the service
